@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DTALKS — a poetry index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#121010;
+    --panel:#1A1714;
+    --panel2:#201C19;
+    --orange:#FF5A1F;
+    --orange-dim:#C2470F;
+    --orange-glass:rgba(255,90,31,.09);
+    --orange-border:rgba(255,90,31,.38);
+    --bone:#F4F2EE;
+    --grey:#8C887F;
+    --line:#2C2723;
+    --matte:#181614;
+    --matte2:#1E1B18;
+    --radius-sm:12px;
+    --radius-md:18px;
+    --radius-lg:26px;
+    --radius-pill:999px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--black);
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255,90,31,.04) 0%, transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    color:var(--bone);
+    font-family:'DM Sans', sans-serif;
+    font-weight:500;
+    position:relative;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
+
+  .mono{ font-family:'DM Mono', monospace; font-weight:500; }
+  .display{ font-family:'Bebas Neue', sans-serif; text-transform:uppercase; letter-spacing:.03em; }
+
+  /* scroll progress bar, right edge */
+  #progress{
+    position:fixed; top:0; right:0; width:3px; height:0%;
+    background:linear-gradient(to bottom, var(--orange), #ff8c5a);
+    z-index:90;
+    border-radius:0 0 var(--radius-pill) var(--radius-pill);
+    box-shadow:0 0 14px rgba(255,90,31,.7);
+  }
+
+  /* ---------- nav ---------- */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:20px 6vw;
+    background:linear-gradient(to bottom, rgba(18,16,16,.96) 0%, rgba(18,16,16,.7) 70%, transparent 100%);
+    backdrop-filter:blur(0px);
+  }
+  nav .brand{ font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:.06em; color:var(--bone); display:flex; align-items:center; gap:10px;}
+  nav .brand .dot{ width:7px; height:7px; border-radius:50%; background:var(--orange); box-shadow:0 0 8px rgba(255,90,31,.6); }
+  nav .brand span{ color:var(--orange); }
+  #burger{
+    width:40px; height:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:var(--radius-sm); cursor:pointer; z-index:120;
+    transition:background .2s, border-color .2s;
+  }
+  #burger:hover{ background:rgba(255,90,31,.08); border-color:var(--orange-border); }
+  #burger span{ width:18px; height:1.5px; background:var(--bone); display:block; transition:.3s; }
+  #burger.open span:nth-child(1){ transform:translateY(7.5px) rotate(45deg); }
+  #burger.open span:nth-child(2){ opacity:0; }
+  #burger.open span:nth-child(3){ transform:translateY(-7.5px) rotate(-45deg); }
+
+  #nav-overlay{
+    position:fixed; inset:0; background:rgba(18,16,16,.98); backdrop-filter:blur(20px); z-index:110;
+    display:flex; flex-direction:column; justify-content:center; align-items:center; gap:34px;
+    transform:translateY(-100%); transition:transform .45s cubic-bezier(.7,0,.2,1);
+  }
+  #nav-overlay.open{ transform:translateY(0); }
+  #nav-overlay a{
+    font-family:'Bebas Neue', sans-serif; font-size:clamp(34px,8vw,72px);
+    color:var(--grey); text-decoration:none; letter-spacing:.06em;
+    transition:color .25s, letter-spacing .25s;
+  }
+  #nav-overlay a:hover{ color:var(--orange); letter-spacing:.12em; }
+
+  /* ---------- hero ---------- */
+  .hero{ padding:140px 6vw 70px; position:relative; }
+  .tag-pill{
+    display:inline-flex; align-items:center; gap:10px;
+    border:1px solid var(--orange-border); background:var(--orange-glass);
+    border-radius:var(--radius-pill); padding:10px 20px;
+    font-family:'DM Mono',monospace; font-size:11px; font-weight:500; letter-spacing:.12em;
+    color:var(--orange); text-transform:uppercase;
+    margin-bottom:32px;
+    box-shadow:0 0 24px rgba(255,90,31,.06);
+  }
+  .tag-pill .dot{ width:6px; height:6px; border-radius:50%; background:var(--orange); box-shadow:0 0 6px rgba(255,90,31,.8); }
+
+  .hero h1{
+    font-size:clamp(52px,11vw,114px);
+    line-height:.94;
+    letter-spacing:.02em;
+  }
+  .hero h1 .l1{ color:var(--bone); display:block; font-weight:800; font-family:'DM Sans',sans-serif; text-transform:uppercase; letter-spacing:-.01em; }
+  .hero h1 .l2{ color:transparent; -webkit-text-stroke:1.5px #3a3530; display:block; font-family:'Bebas Neue',sans-serif; letter-spacing:.06em; }
+  .hero h1 .l3{ color:var(--orange); display:block; font-family:'Bebas Neue',sans-serif; letter-spacing:.06em; text-shadow:0 0 40px rgba(255,90,31,.25); }
+
+  .hero .sub{ margin-top:30px; max-width:520px; font-size:16px; line-height:1.85; color:var(--grey); font-weight:500; }
+  .hero .sub b{ color:var(--bone); font-weight:700; }
+
+  .hero .btn-row{ margin-top:40px; display:flex; gap:14px; flex-wrap:wrap; }
+  .btn-solid, .btn-outline{
+    font-family:'DM Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    padding:15px 30px; border-radius:var(--radius-pill); text-decoration:none; cursor:pointer;
+    transition:transform .2s ease, background .2s, box-shadow .2s, border-color .2s;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-solid{ background:var(--orange); color:#1A0900; border:none; font-weight:700; box-shadow:0 4px 24px rgba(255,90,31,.3); }
+  .btn-solid:hover{ background:#ff6f3a; transform:translateY(-2px); box-shadow:0 8px 32px rgba(255,90,31,.4); }
+  .btn-outline{ border:1px solid var(--line); color:var(--bone); background:rgba(255,255,255,.03); backdrop-filter:blur(6px); }
+  .btn-outline:hover{ border-color:var(--orange-border); color:var(--orange); background:var(--orange-glass); transform:translateY(-1px); }
+
+  .hero-photo{
+    margin-top:64px; position:relative; border-radius:var(--radius-lg); overflow:hidden;
+    border:1px solid var(--line); max-width:680px;
+    height:320px;
+    background:
+      linear-gradient(135deg, rgba(255,90,31,.03) 0%, transparent 50%),
+      repeating-linear-gradient(135deg, #1d1b18 0 2px, var(--matte) 2px 28px);
+    display:flex; align-items:flex-end; padding:26px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .hero-photo .status-pill{
+    display:inline-flex; align-items:center; gap:10px;
+    background:rgba(0,0,0,.6); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,90,31,.2);
+    border-radius:var(--radius-pill); padding:10px 20px;
+    font-family:'DM Mono',monospace; font-size:10.5px; font-weight:500; letter-spacing:.14em; color:var(--orange); text-transform:uppercase;
+  }
+  .hero-photo .status-pill .dot{ width:7px; height:7px; border-radius:50%; background:var(--orange); box-shadow:0 0 8px rgba(255,90,31,.8); animation:blink 1.4s steps(1) infinite; }
+  @keyframes blink{ 0%,49%{opacity:1;} 50%,100%{opacity:.2;} }
+
+  /* ---------- section heading w/ number ---------- */
+  .sec-num{
+    display:flex; align-items:center; gap:16px; margin-bottom:28px;
+  }
+  .sec-num .n{ font-family:'DM Mono',monospace; font-weight:700; color:var(--orange); font-size:12px; letter-spacing:.14em; }
+  .sec-num .l{ font-family:'DM Mono',monospace; font-weight:500; color:var(--grey); font-size:12px; letter-spacing:.22em; text-transform:uppercase; }
+  .sec-num .line{ flex:1; height:1px; background:linear-gradient(to right, var(--line), transparent); max-width:120px; }
+
+  section{ padding:96px 6vw; border-top:1px solid var(--line); }
+  section h2.big{ font-size:clamp(36px,6vw,66px); line-height:1.02; color:var(--bone); margin-bottom:6px; }
+
+  /* ---------- about ---------- */
+  .about-text{ max-width:680px; font-size:17px; line-height:1.9; color:#C9C4BB; margin-top:24px; font-weight:500; }
+  .about-text + .about-text{ margin-top:18px; }
+
+  /* ---------- pills + stats ---------- */
+  .pill-grid{ display:flex; flex-wrap:wrap; gap:10px; margin:30px 0 50px; }
+  .pill{
+    background:var(--matte); border:1px solid var(--line); border-radius:var(--radius-pill);
+    padding:10px 20px; font-size:13.5px; font-weight:600; color:#C9C4BB;
+    transition:border-color .2s, color .2s;
+    letter-spacing:.01em;
+  }
+  .pill:hover{ border-color:var(--orange-border); color:var(--orange); }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden; margin-bottom:40px; }
+  .stat-grid .stat{ background:var(--matte); padding:36px 28px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .stat-grid .stat.full{ grid-column:1/-1; }
+  .stat b{ font-family:'Bebas Neue',sans-serif; font-size:54px; color:var(--orange); letter-spacing:.02em; text-shadow:0 0 30px rgba(255,90,31,.2); }
+  .stat .lab{ color:var(--grey); font-size:13px; line-height:1.5; font-weight:600; }
+
+  .status-banner{
+    display:flex; align-items:center; gap:14px;
+    border:1px solid var(--orange-border); background:var(--orange-glass);
+    border-radius:var(--radius-md); padding:18px 26px;
+    box-shadow:0 0 30px rgba(255,90,31,.06);
+  }
+  .status-banner .dot{ width:8px; height:8px; border-radius:50%; background:var(--orange); box-shadow:0 0 8px rgba(255,90,31,.7); animation:blink 1.4s steps(1) infinite; }
+  .status-banner span{ font-family:'DM Mono',monospace; font-size:12px; font-weight:700; letter-spacing:.14em; color:var(--orange); text-transform:uppercase; }
+
+  /* ---------- filter tabs ---------- */
+  .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin:40px 0 46px; }
+  .tab{
+    display:flex; align-items:center; gap:9px;
+    border:1px solid var(--line); border-radius:var(--radius-pill); padding:12px 20px;
+    font-size:13px; font-weight:700; letter-spacing:.02em; color:var(--grey); cursor:pointer; background:var(--matte);
+    transition:border-color .2s, color .2s, background .2s, transform .15s, box-shadow .2s;
+  }
+  .tab:hover{ border-color:rgba(255,90,31,.25); color:var(--bone); transform:translateY(-1px); }
+  .tab .ic{ width:6px; height:6px; border-radius:50%; background:var(--grey); transition:background .2s; }
+  .tab.active{ border-color:var(--orange-border); color:var(--orange); background:var(--orange-glass); box-shadow:0 0 20px rgba(255,90,31,.1); }
+  .tab.active .ic{ background:var(--orange); box-shadow:0 0 6px rgba(255,90,31,.7); }
+
+  /* ---------- poem cards ---------- */
+  .poems-grid{ display:flex; flex-direction:column; gap:0; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--line); }
+  .poem{
+    position:relative;
+    border-bottom:1px solid var(--line);
+    border-left:none; border-right:none; border-top:none;
+    padding:46px 5vw 46px 6vw;
+    overflow:hidden;
+    cursor:pointer;
+    user-select:none;
+    touch-action:pan-y;
+    background:var(--matte);
+    transition:background .25s;
+    opacity:0; transform:translateY(20px);
+  }
+  .poems-grid .poem:last-child{ border-bottom:none; }
+  .poem.visible{ animation:rise .7s ease forwards; }
+  @keyframes rise{ from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+  .poem:nth-child(even){ background:var(--matte2); }
+  .poem:hover{ background:#232019; }
+  .poem.hidden-by-filter{ display:none; }
+
+  .poem-inner{ transition:transform .25s ease; will-change:transform; }
+  .poem.dragging .poem-inner{ transition:none; }
+
+  .cam-hud{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    font-family:'DM Mono',monospace; font-size:11px; font-weight:500; letter-spacing:.06em;
+    color:var(--orange); margin-bottom:22px;
+  }
+  .cam-hud .recdot{ width:8px; height:8px; border-radius:50%; background:var(--orange); box-shadow:0 0 10px rgba(255,90,31,.8); animation:blink 1.4s steps(1) infinite; }
+  .cam-hud .rec{ font-weight:700; }
+  .cam-hud .sep{ opacity:.35; color:var(--grey); }
+  .cam-hud .mood{ color:var(--grey); font-weight:500; }
+
+  .poem-body{ max-width:740px; }
+  .poem-body h3{ font-family:'Bebas Neue',sans-serif; font-size:clamp(26px,3.4vw,40px); letter-spacing:.04em; margin-bottom:20px; color:var(--bone); }
+  .poem-body .text{ font-size:15.5px; line-height:2.1; color:#C9C4BB; white-space:pre-line; font-weight:500; }
+  .poem-body .footing{ margin-top:26px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); }
+
+  /* swipe hints — two directions */
+  .swipe-hints{ position:absolute; bottom:16px; left:0; right:0; display:flex; justify-content:space-between; padding:0 5vw; pointer-events:none; }
+  .swipe-hint{ font-family:'DM Mono',monospace; font-size:10px; font-weight:500; letter-spacing:.12em; color:var(--grey); text-transform:uppercase; opacity:.6; }
+
+  /* next poem panel (swipe left) */
+  .next-panel{
+    position:absolute; top:0; right:0; bottom:0; width:min(72vw,300px);
+    background:var(--matte2); border-left:1px solid var(--line);
+    padding:36px 24px;
+    transform:translateX(100%); transition:transform .35s ease; z-index:4;
+    display:flex; flex-direction:column; justify-content:center; gap:10px;
+  }
+  .poem.next-open .next-panel{ transform:translateX(0); }
+  .next-panel .ntag{ font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.18em; color:var(--orange); opacity:.8; margin-bottom:6px; }
+  .next-panel h4{ font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:.04em; color:var(--bone); }
+  .next-panel .npreview{ font-size:13px; line-height:1.8; color:var(--grey); font-weight:500; margin-top:4px; }
+  .next-panel .ngo{ margin-top:14px; font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.14em; color:var(--orange); text-transform:uppercase; }
+
+  /* hero photo image */
+  .hero-photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+  .note-panel{
+    position:absolute; top:0; left:0; bottom:0; width:min(78vw,360px);
+    background:var(--orange); color:#1A0900; padding:50px 28px;
+    transform:translateX(-100%); transition:transform .35s ease; z-index:5;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .poem.note-open .note-panel{ transform:translateX(0); }
+  .note-panel .ntag{ font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.18em; opacity:.75; margin-bottom:14px; }
+  .note-panel p{ font-size:14.5px; line-height:1.85; font-weight:600; }
+
+  #mood-canvas{ position:fixed; inset:0; z-index:200; pointer-events:none; opacity:0; }
+
+  /* ---------- closing ---------- */
+  .closing{ text-align:left; }
+  .closing h2{ font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7.5vw,80px); line-height:1.02; color:var(--bone); max-width:760px; margin:18px 0 0; letter-spacing:.04em; }
+  .closing .sub{ margin-top:24px; max-width:480px; color:var(--grey); font-size:15.5px; line-height:1.85; font-weight:500; }
+
+  footer{
+    padding:38px 6vw 52px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  footer .brand{ font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--bone); letter-spacing:.06em; }
+  footer .brand span{ color:var(--orange); }
+  footer .meta{ font-family:'DM Mono',monospace; font-size:10.5px; font-weight:500; color:var(--grey); letter-spacing:.1em; }
+
+  a:focus-visible, button:focus-visible{ outline:2px solid var(--orange); outline-offset:3px; border-radius:4px; }
+
+  @media (max-width:720px){
+    .stat-grid{ grid-template-columns:1fr; }
+    .about{ grid-template-columns:1fr; }
+    .poem{ padding:36px 6vw; }
+    .swipe-hint{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<nav>
+  <div class="brand"><span class="dot"></span>DTALKS<span>.</span></div>
+  <button id="burger" aria-label="menu"><span></span><span></span><span></span></button>
+</nav>
+
+<div id="nav-overlay">
+  <a href="#about" data-close>ABOUT</a>
+  <a href="#index" data-close>POEMS</a>
+  <a href="#notes" data-close>NOTES</a>
+</div>
+
+<section class="hero" style="border-top:none;">
+  <div class="tag-pill"><span class="dot"></span>STILLNESS · LONGING · MEMORY</div>
+  <h1 class="display">
+    <span class="l1">DTALKS</span>
+    <span class="l2">WRITES</span>
+    <span class="l3">WHAT WE FEEL.</span>
+  </h1>
+  <p class="sub">A working index of poems. Some finished, some still warm from writing. <b>Filed in the order they were felt</b>, not the order they were polished.</p>
+  <div class="btn-row">
+    <a class="btn-solid" href="#index">VIEW POEMS ↓</a>
+    <a class="btn-outline" href="#about">ABOUT ME</a>
+  </div>
+  <div class="hero-photo">
+    <img src="YOUR_IMAGE_PATH_HERE" alt="Dtalks" onerror="this.style.display='none'">
+    <div class="status-pill"><span class="dot"></span>CURRENTLY WRITING</div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="sec-num"><span class="n mono">001</span><span class="l mono">ABOUT</span><div class="line"></div></div>
+  <h2 class="big display">THE WRITER.</h2>
+  <p class="about-text">I write the way most people talk to themselves at 2am. Half formed, a little too honest, looking for the line that makes the feeling sit still long enough to look at.</p>
+  <p class="about-text">Just paper, a phone notes app, and whatever wouldn't leave me alone that day. These poems are filed exactly as they were found.</p>
+
+  <div class="pill-grid">
+    <div class="pill">Free Verse</div>
+    <div class="pill">Confessional</div>
+    <div class="pill">Short Form</div>
+    <div class="pill">Imagery</div>
+    <div class="pill">Field Notes</div>
+    <div class="pill">Late Night Drafts</div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat full"><b>∞</b><span class="lab">Drafts unfinished, and counting</span></div>
+  </div>
+
+  <div class="status-banner"><span class="dot"></span><span>OPEN TO READING REQUESTS</span></div>
+</section>
+
+<section id="index">
+  <div class="sec-num"><span class="n mono">002</span><span class="l mono">POEMS</span><div class="line"></div></div>
+  <h2 class="big display">THE INDEX.</h2>
+  <p class="about-text" style="margin-top:14px;">Swipe right to read the thought behind it. Swipe left for the next poem. Double click to feel it.</p>
+
+  <div class="tabs" id="filterTabs">
+    <div class="tab active" data-filter="all"><span class="ic"></span>All</div>
+    <div class="tab" data-filter="stillness"><span class="ic"></span>Stillness</div>
+    <div class="tab" data-filter="waiting"><span class="ic"></span>Waiting</div>
+    <div class="tab" data-filter="tenderness"><span class="ic"></span>Tenderness</div>
+    <div class="tab" data-filter="letting-go"><span class="ic"></span>Letting Go</div>
+    <div class="tab" data-filter="noticing"><span class="ic"></span>Noticing</div>
+    <div class="tab" data-filter="resilience"><span class="ic"></span>Resilience</div>
+  </div>
+
+  <div class="poems-grid">
+
+    <article class="poem" data-mood="stillness" data-color="#FF5A1F" data-next="1">
+      <div class="note-panel"><div class="ntag mono">FIELD NOTE</div><p>Written at 6am with the kettle still ticking. Some mornings the silence asks for nothing. I just wanted to write that down before it left.</p></div>
+      <div class="next-panel"><div class="ntag mono">NEXT POEM</div><h4>WHAT THE WINDOW KNOWS</h4><p class="npreview">Rain again, soft as a held breath. The glass remembers every face...</p><div class="ngo">tap to go ↓</div></div>
+      <div class="poem-inner">
+        <div class="cam-hud"><span class="recdot"></span><span class="rec">REC</span><span class="sep">/</span><span class="mood">MOOD: STILLNESS</span></div>
+        <div class="poem-body">
+          <h3>MORNING, UNHURRIED</h3>
+          <div class="text">The kettle sighs before I do.
+Light comes in sideways,
+unsure of itself,
+the way I am most mornings.
+
+I have nowhere to be
+but here, holding warmth
+in both hands.</div>
+          <div class="footing">filed 04.2026 · 3 drafts</div>
+        </div>
+      </div>
+      <div class="swipe-hints"><span class="swipe-hint">← feel it</span><span class="swipe-hint">next →</span></div>
+    </article>
+
+    <article class="poem" data-mood="waiting" data-color="#FF5A1F" data-next="2">
+      <div class="note-panel"><div class="ntag mono">FIELD NOTE</div><p>I wrote this during a week it wouldn't stop raining. The window kept fogging up faster than I could think.</p></div>
+      <div class="next-panel"><div class="ntag mono">NEXT POEM</div><h4>SMALL MERCY</h4><p class="npreview">You texted back. That's all. But the evening unclenched its fist...</p><div class="ngo">tap to go ↓</div></div>
+      <div class="poem-inner">
+        <div class="cam-hud"><span class="recdot"></span><span class="rec">REC</span><span class="sep">/</span><span class="mood">MOOD: WAITING</span></div>
+        <div class="poem-body">
+          <h3>WHAT THE WINDOW KNOWS</h3>
+          <div class="text">Rain again, soft as a held breath.
+The glass remembers every face
+that's leaned against it, waiting
+for someone, for spring,
+for nothing in particular.
+
+I am one of those faces now.</div>
+          <div class="footing">filed 04.2026 · 1 draft</div>
+        </div>
+      </div>
+      <div class="swipe-hints"><span class="swipe-hint">← feel it</span><span class="swipe-hint">next →</span></div>
+    </article>
+
+    <article class="poem" data-mood="tenderness" data-color="#FF5A1F" data-next="3">
+      <div class="note-panel"><div class="ntag mono">FIELD NOTE</div><p>A reply to a text I'd been afraid to send. Some relief is too small to talk about out loud, so it became this instead.</p></div>
+      <div class="next-panel"><div class="ntag mono">NEXT POEM</div><h4>LEAVING LIGHT ON</h4><p class="npreview">I keep one lamp on for you, though you moved out in March...</p><div class="ngo">tap to go ↓</div></div>
+      <div class="poem-inner">
+        <div class="cam-hud"><span class="recdot"></span><span class="rec">REC</span><span class="sep">/</span><span class="mood">MOOD: TENDERNESS</span></div>
+        <div class="poem-body">
+          <h3>SMALL MERCY</h3>
+          <div class="text">You texted back.
+That's all.
+But the evening unclenched its fist,
+and I could breathe again
+in this small, ordinary apartment
+that suddenly felt like enough.</div>
+          <div class="footing">filed 05.2026 · 2 drafts</div>
+        </div>
+      </div>
+      <div class="swipe-hints"><span class="swipe-hint">← feel it</span><span class="swipe-hint">next →</span></div>
+    </article>
+
+    <article class="poem" data-mood="letting-go" data-color="#FF5A1F" data-next="4">
+      <div class="note-panel"><div class="ntag mono">FIELD NOTE</div><p>March, after they moved out. The lamp stayed on for longer than it should have. So did I.</p></div>
+      <div class="next-panel"><div class="ntag mono">NEXT POEM</div><h4>FIELD NOTES</h4><p class="npreview">Today: clouds shaped like nothing, a bird that wouldn't stop singing...</p><div class="ngo">tap to go ↓</div></div>
+      <div class="poem-inner">
+        <div class="cam-hud"><span class="recdot"></span><span class="rec">REC</span><span class="sep">/</span><span class="mood">MOOD: LETTING GO</span></div>
+        <div class="poem-body">
+          <h3>LEAVING LIGHT ON</h3>
+          <div class="text">I keep one lamp on for you
+though you moved out in March.
+Old habits glow the longest,
+amber and a little foolish,
+still hoping someone's
+finding their way home.</div>
+          <div class="footing">filed 05.2026 · 4 drafts</div>
+        </div>
+      </div>
+      <div class="swipe-hints"><span class="swipe-hint">← feel it</span><span class="swipe-hint">next →</span></div>
+    </article>
+
+    <article class="poem" data-mood="noticing" data-color="#FF5A1F" data-next="5">
+      <div class="note-panel"><div class="ntag mono">FIELD NOTE</div><p>Nothing happened that day. I wrote it down anyway, because nothing happening is still something, sometimes.</p></div>
+      <div class="next-panel"><div class="ntag mono">NEXT POEM</div><h4>ANYWAY</h4><p class="npreview">It didn't work out, the thing I wanted so quietly I never said it out loud...</p><div class="ngo">tap to go ↓</div></div>
+      <div class="poem-inner">
+        <div class="cam-hud"><span class="recdot"></span><span class="rec">REC</span><span class="sep">/</span><span class="mood">MOOD: NOTICING</span></div>
+        <div class="poem-body">
+          <h3>FIELD NOTES</h3>
+          <div class="text">Today: clouds shaped like nothing,
+a bird that wouldn't stop singing,
+the smell of cut grass,
+proof that the world
+keeps tending itself
+whether I notice or not.</div>
+          <div class="footing">filed 06.2026 · 1 draft</div>
+        </div>
+      </div>
+      <div class="swipe-hints"><span class="swipe-hint">← feel it</span><span class="swipe-hint">next →</span></div>
+    </article>
+
+    <article class="poem" data-mood="resilience" data-color="#FF5A1F">
+      <div class="note-panel"><div class="ntag mono">FIELD NOTE</div><p>For the version of me that kept showing up to ordinary mornings even when nothing inside felt ordinary.</p></div>
+      <div class="poem-inner">
+        <div class="cam-hud"><span class="recdot"></span><span class="rec">REC</span><span class="sep">/</span><span class="mood">MOOD: RESILIENCE</span></div>
+        <div class="poem-body">
+          <h3>ANYWAY</h3>
+          <div class="text">It didn't work out, the thing
+I wanted so quietly
+I never said it out loud.
+Still, the sun came up anyway.
+Still, I made coffee anyway.
+Still, still, still.</div>
+          <div class="footing">filed 06.2026 · 2 drafts</div>
+        </div>
+      </div>
+      <div class="swipe-hints"><span class="swipe-hint">← feel it</span><span class="swipe-hint" style="opacity:.2">that's the last one</span></div>
+    </article>
+
+  </div>
+</section>
+
+<section id="notes" class="closing">
+  <div class="sec-num"><span class="n mono">003</span><span class="l mono">CLOSING</span><div class="line"></div></div>
+  <h2>WORDS LIKE THESE<br>FIND THEIR PEOPLE.</h2>
+  <p class="sub">Thank you for reading slowly. That's all a poem really asks for.</p>
+</section>
+
+<footer>
+  <div class="brand">DTALKS<span>.</span></div>
+  <div class="meta mono">© 2026 — AN EVOLVING INDEX</div>
+</footer>
+
+<canvas id="mood-canvas"></canvas>
+
+<script>
+/* scroll progress */
+function updateProgress(){
+  const h = document.documentElement;
+  const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+  document.getElementById('progress').style.height = pct + '%';
+}
+window.addEventListener('scroll', updateProgress);
+updateProgress();
+
+/* burger menu */
+const burger = document.getElementById('burger');
+const overlay = document.getElementById('nav-overlay');
+burger.addEventListener('click', ()=>{
+  burger.classList.toggle('open');
+  overlay.classList.toggle('open');
+});
+overlay.querySelectorAll('a').forEach(a=>{
+  a.addEventListener('click', ()=>{
+    burger.classList.remove('open');
+    overlay.classList.remove('open');
+  });
+});
+
+/* reveal poems on scroll */
+const items = document.querySelectorAll('.poem');
+const obs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+    }
+  });
+}, {threshold:.12});
+items.forEach(i=>obs.observe(i));
+
+/* filter tabs */
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    tabs.forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const filter = tab.dataset.filter;
+    items.forEach(poem=>{
+      if(filter === 'all' || poem.dataset.mood === filter){
+        poem.classList.remove('hidden-by-filter');
+      } else {
+        poem.classList.add('hidden-by-filter');
+      }
+    });
+  });
+});
+
+/* swipe / drag — right reveals note, left reveals next poem */
+const allPoems = Array.from(items);
+items.forEach((poem, idx)=>{
+  let startX = 0, currentX = 0, dragging = false;
+  const inner = poem.querySelector('.poem-inner');
+  const hasNext = poem.querySelector('.next-panel');
+
+  function closeAll(){
+    poem.classList.remove('note-open','next-open');
+    inner.style.transform = 'translateX(0)';
+  }
+
+  function start(x){ dragging = true; startX = x; currentX = 0; poem.classList.add('dragging'); }
+  function move(x){
+    if(!dragging) return;
+    const dx = x - startX;
+    // right swipe = positive, clamped 0..140 (note panel)
+    // left swipe = negative, clamped -140..0 (next panel)
+    if(dx >= 0){
+      currentX = Math.min(dx, 140);
+      poem.classList.remove('next-open');
+    } else {
+      currentX = Math.max(dx, -140);
+      poem.classList.remove('note-open');
+    }
+    inner.style.transform = `translateX(${currentX}px)`;
+  }
+  function end(){
+    if(!dragging) return;
+    dragging = false;
+    poem.classList.remove('dragging');
+    if(currentX > 70){
+      poem.classList.add('note-open');
+      inner.style.transform = 'translateX(140px)';
+    } else if(currentX < -70 && hasNext){
+      poem.classList.add('next-open');
+      inner.style.transform = 'translateX(-140px)';
+    } else {
+      closeAll();
+    }
+    currentX = 0;
+  }
+
+  poem.addEventListener('pointerdown', e=> start(e.clientX));
+  poem.addEventListener('pointermove', e=> move(e.clientX));
+  window.addEventListener('pointerup', end);
+
+  // tap note panel = close
+  poem.addEventListener('click', (e)=>{
+    if(poem.classList.contains('note-open') && !e.target.closest('.note-panel')){ closeAll(); }
+  });
+
+  // tap next panel = scroll to next poem
+  if(hasNext){
+    hasNext.addEventListener('click', ()=>{
+      const nextPoem = allPoems[idx + 1];
+      if(nextPoem){
+        closeAll();
+        setTimeout(()=> nextPoem.scrollIntoView({behavior:'smooth', block:'start'}), 200);
+      }
+    });
+  }
+});
+
+/* double-click mood animation */
+const canvas = document.getElementById('mood-canvas');
+const ctx = canvas.getContext('2d');
+function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+
+const moodConfig = {
+  'stillness':   { shape:'glow',   count:26, speed:0.4, dir:-1 },
+  'waiting':     { shape:'rain',   count:60, speed:2.2, dir:1  },
+  'tenderness':  { shape:'firefly',count:40, speed:0.6, dir:-1 },
+  'letting-go':  { shape:'leaf',   count:30, speed:0.8, dir:1  },
+  'noticing':    { shape:'drift',  count:34, speed:0.5, dir:1  },
+  'resilience':  { shape:'ember',  count:46, speed:1.1, dir:-1 },
+};
+
+function spawnParticles(mood){
+  const cfg = moodConfig[mood] || moodConfig['stillness'];
+  const particles = [];
+  for(let i=0;i<cfg.count;i++){
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: cfg.dir === -1 ? canvas.height + Math.random()*100 : -Math.random()*100,
+      r: 2 + Math.random()*4,
+      vy: cfg.dir * (cfg.speed + Math.random()*cfg.speed),
+      vx: (Math.random()-0.5)*0.6,
+      sway: Math.random()*Math.PI*2
+    });
+  }
+  return {cfg, particles};
+}
+
+let activeAnim = null;
+function runMoodAnimation(mood, color){
+  canvas.style.opacity = 1;
+  const state = spawnParticles(mood);
+  let frame = 0;
+  const maxFrames = 150;
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    frame++;
+    state.particles.forEach(p=>{
+      p.y += p.vy;
+      p.sway += 0.03;
+      p.x += p.vx + Math.sin(p.sway)*0.5;
+      const fade = Math.max(0, 1 - frame/maxFrames);
+      ctx.globalAlpha = fade * 0.9;
+      ctx.fillStyle = color;
+      if(state.cfg.shape === 'rain'){
+        ctx.fillRect(p.x, p.y, 1.5, 14);
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fill();
+      }
+    });
+    ctx.globalAlpha = 1;
+    if(frame < maxFrames){
+      activeAnim = requestAnimationFrame(draw);
+    } else {
+      canvas.style.opacity = 0;
+      setTimeout(()=> ctx.clearRect(0,0,canvas.width,canvas.height), 400);
+    }
+  }
+  if(activeAnim) cancelAnimationFrame(activeAnim);
+  draw();
+}
+
+items.forEach(poem=>{
+  poem.addEventListener('dblclick', ()=>{
+    const mood = poem.dataset.mood;
+    const color = poem.dataset.color || '#FF5A1F';
+    runMoodAnimation(mood, color);
+  });
+});
+</script>
+
+</body>
+</html>
